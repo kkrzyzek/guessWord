@@ -1,0 +1,18 @@
+Pawel 20
+Michal 14
+Kacper 48
+Magda 15.15
+Zosia 99
+Kasia 1
+Krzysztof 66.67
+Maria 66.67
+Tomek 50.00
+Jerzy 66.67
+Pawel 60.00
+Pawel 100.00
+Piotr 100.00
+Kamil 88.89
+Bartek 75.00
+Hubert 100.00
+
+KrzTester 42.86

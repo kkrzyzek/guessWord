@@ -1,0 +1,220 @@
+#!/usr/bin/python
+#Krzysztof Krzyzek, 2018
+import random
+import sys
+import operator
+import os
+
+import modul
+
+CURRENT_DIR = os.path.dirname(__file__)
+slowaPath = os.path.join(CURRENT_DIR, 'slowa.txt')
+rankingPath = os.path.join(CURRENT_DIR, 'ranking.txt')
+
+def countScore( x1, x2 ):
+   score = 100*len(set(x1))/float(x2)
+   return score
+
+start = "\033[1m"
+end = "\033[0;0m"
+
+for i in range (len(sys.argv)-1):
+	if (sys.argv[i+1] == "-h" or sys.argv[i+1] == "--help"):
+		print ("**********************************************************")	
+		print "@@@ Krzysztof Krzyzek - 2018 @@@\nGRA ZGADNIJ SLOWO"
+		print ("**********************************************************")
+		print "*O programie:\nProgram to prosta gra 'Zgadnij slowo'. Program jest typu MENU DRIVEN.\n*Uruchomienie = ./guessWord.python\n*W menu uzytkownik ma dwie opcje do wyboru:\n1.wpisanie start -- rozpoczyna gre. przed rozpoczeciem gry trzeba podac imie.\n2.wpisanie ranking-przedstawia imiona graczy i wyniki (posortowane od najlepszego), ktore osiagneli w grze.\n*Zasady gry:\nGracz podaje swoje imie i nastepnie rozpoczyna gre. Losowane jest jedno slowo z pliku tekstowego slowa.txt, ktore gracz musi odgadnac. Gracz widzi tylko pola prezentujace dlugosc slowa - np. dla slowa do odgadniecia 'dom', gracz widzi trzy puste pola '_ _ _'. Gracz odgaduje slowo podajac litery. Jesli litera znajduje sie w szukanym slowie, to jest wyswietlana zamiast pustego pola - np. 'd _ _'. Gracz moze sie pomylic 10 razy (pomylka = podanie litery, ktorej nie ma w slowie lub podanie litery, ktora gracz juz podal wczesniej). Podanie przez gracza znaku niebedacego litera jest sygnalizowane przez program odpowiednim komunikatem. Po pomyslnym odgadnieciu slowa jest wyswietlany wynik gracza, ktory jest dodawany do rankingu - plik ranking.txt. W trakcie gry wyswietlane sa rowniez dla ulatwienia litery, ktore gracz podal do tej pory.\n\nPO ROZPOCZECIU GRY WYSWIETLANE JEST SLOWO, KTORE TRZEBA ODGADNAC - np. *Slowo do odgadniecia - ['t', 'h', 'a', 'n'].\nWYSWIETLANE JEST TO TYLKO W CELU ULATWIENIA TESTOWANIA PROGRAMU! Docelowo nie powinno tego byc."
+		sys.exit()
+
+while True:
+
+	print (start + "\nWitaj w grze:" + end)
+	print("""         
+	__________                    .___       .__      __ 
+	\____    /   ____ _____     __| _/ ____  |__|    |__|
+		/     /   / ___\\__  \   / __ | /    \ |  |    |  |
+	 /     /_  / /_/  >/ __ \_/ /_/ ||   |  \|  |    |  |
+	/_______ \ \___  /(____  /\____ ||___|  /|__|/\__|  |
+		      \//_____/      \/      \/     \/     \______|
+		               .__                                 
+		         ______|  |    ____ __  _  __ ____         
+		        /  ___/|  |   /  _ \\ \/ \/ //  _ \        
+		        \___ \ |  |__(  <_> )\     /(  <_> )       
+		       /____  >|____/ \____/  \/\_/  \____/        
+		            \/                                 
+		                """)
+	flagForExit=0
+
+	print ("Wpisz:\n" + start + "	s" + end + " -- aby rozpoczac gre\n" + start + "	r" + end + " -- aby zobaczyc ranking\n" + start + "	k" + end + " -- aby zakonczyc\n")
+	userChoice=raw_input()
+
+	if userChoice == "start" or userChoice == "s" or userChoice == "S":
+		print start + "@@@ ROZPOCZNIJ GRE @@@" + end
+		print ("**********************************************************")
+		userName=raw_input("Podaj swoj pseudonim: ")
+		if ' ' in userName or len(userName)==0:
+			print start + "Blad! Podano niepoprawny pseudonim! Sprobuj ponownie." + end
+			sys.exit()
+		print ("**********************************************************")
+		print ("@@@ WITAJ %s. ROZPOCZYNAMY GRE! @@@" % (userName))
+		print ("**********************************************************")
+	elif userChoice == "ranking" or userChoice == "r" or userChoice == "R":
+		print start + "@@@ RANKING (gracz, wynik) @@@" + end
+		print "(MAX do zdobycia = 100pkt)"
+		file = open(rankingPath, "r")
+		ranking = dict()
+		print ("**********************************************************")
+		for line in file:
+			if line in ['\n', '\r\n']:
+				continue
+			words = line.split()
+			fullName = words[0]
+			ranking[fullName]=float(words[1])
+		file.close()
+
+		sortedRanking = sorted(ranking.items(), key=operator.itemgetter(1))
+		pos=1
+		for item in reversed(sortedRanking):
+				print ("%s. %s - %s pkt" % (pos, item[0], item[1]))
+				pos+=1
+		print ("**********************************************************")
+
+		print ("Wpisz:\n" + start + "	p" + end + " -- aby powrocic do glownego menu\n" + start + "	k" + end + " -- aby zakonczyc\n")
+		rankingUserChoice=raw_input()
+		if rankingUserChoice == "p" or rankingUserChoice == "P" or rankingUserChoice == "powrot":
+			continue
+		elif rankingUserChoice == "koniec" or rankingUserChoice == "k" or rankingUserChoice == "K":
+			print start + "Zamykam." + end
+			sys.exit()
+		else:
+			print start + "Blad! Podano nieznana wartosc! Zamykam." + end
+			sys.exit()
+	elif userChoice == "koniec" or userChoice == "k" or userChoice == "K":
+		print start + "Zamykam." + end
+		sys.exit()
+	else:
+		print start + "Blad! Podano nieznana wartosc! Zamykam." + end
+		sys.exit()
+	
+	words=[]
+	hiddenWord=[]
+	repeatLetterCheck=[]
+	triedLetters=[]
+
+	with open(slowaPath, 'r') as file:
+		for line in file:
+			words.append(line[:-2])
+
+	random.shuffle(words)
+	randWord = list(words[0])
+	print("*Slowo do odgadniecia - %s\nwyswietlane wylacznie, aby ulatwic testowanie!" % (randWord))
+	print ("**********************************************************")
+	print ("*Wskazowka - slowo do odgadniecia jest w jezyku angielskim!\n")
+
+	repeatLetterCheck.extend(randWord)
+	hiddenWord.extend(randWord)
+	for i in range (len(hiddenWord)):
+		hiddenWord[i]="_"
+
+	print(' '.join(hiddenWord))
+	print
+
+	stepCounter=0
+	correctTryCounter=0
+	limitCounter=10
+
+	while correctTryCounter < len(randWord):
+		if triedLetters:
+			print ("Litery, ktore juz probowales:")
+			print (', '.join([str(item) for item in triedLetters]))
+		enteredLetter=raw_input("Podaj litere (pozostalo %s prob): " % (limitCounter))
+
+		if enteredLetter.isalpha()==False or len(enteredLetter)!=1:
+			print start + "Blad! Podano niepoprawna wartosc! Sprobuj ponownie." + end
+			print(' '.join(hiddenWord))
+			print ("**********************************************************")
+			continue
+		print ("**********************************************************")
+
+		enteredLetter=enteredLetter.lower()
+		stepCounter+=1
+		triedLetters.append(enteredLetter)
+	
+		goodGuess=False
+		for i in range(len(randWord)):
+			if randWord[i]==enteredLetter and enteredLetter in repeatLetterCheck:
+				hiddenWord[i]=enteredLetter
+				correctTryCounter+=1
+				goodGuess=True
+
+				repeatLetterCheck.remove(enteredLetter)
+
+		if not goodGuess:
+				limitCounter-=1
+
+		#print (correctTryCounter)			
+		print(' '.join(hiddenWord))
+	
+		if limitCounter==0:
+			print ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+			print("""          
+	__________                                          .__                 
+	\______   \_______________ ____   ________________  |  |   ____   ______
+	 |     ___/\_  __ \___   // __ \ / ___\_  __ \__  \ |  | _/ __ \ /  ___/
+	 |    |     |  | \//    /\  ___// /_/  >  | \// __ \|  |_\  ___/ \___ \ 
+	 |____|     |__|  /_____ \\___  >___  /|__|  (____  /____/\___  >____  >
+		                      \/    \/_____/            \/          \/     \/ 
+		                  """)
+			print("""          
+		    _______
+		   |/      |
+		   |      (_)
+		   |      \|/
+		   |       |
+		   |      / |
+		   |
+		  _|___
+		                """)
+
+			print ("NIESTETY %s, ALE PRZEGRALES ;(" % (userName))
+			print ("Wpisz:\n" + start + "	p" + end + " -- aby powrocic do glownego menu\n" + start + "	k" + end + " -- aby zakonczyc\n")
+			loserUserChoice=raw_input()
+			if loserUserChoice == "p" or loserUserChoice == "P" or loserUserChoice == "powrot":
+				flagForExit=1
+				break
+			elif loserUserChoice == "k" or loserUserChoice == "K" or loserUserChoice == "koniec":
+				print start + "Zamykam." + end 
+				sys.exit()
+			else:
+				print start + "Blad! Podano nieznana wartosc! Zamykam." + end 
+				sys.exit()
+			
+	if flagForExit==1:
+		continue
+
+	score = countScore(randWord, stepCounter)
+	print ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+	print("""          
+		________                 __          .__                        __         
+	 /  _____/_______ _____  _/  |_  __ __ |  |  _____     ____      |__|  ____  
+	/   \  ___\_  __ \\__  \ \   __\|  |  \|  |  \__  \  _/ ___\     |  |_/ __ \ 
+	\    \_\  \|  | \/ / __ \_|  |  |  |  /|  |__ / __ \_\  \___     |  |\  ___/ 
+	 \______  /|__|   (____  /|__|  |____/ |____/(____  / \___  >/\__|  | \___  >
+		      \/             \/                         \/      \/ \______|     \/ 
+		                  """)
+	print ("BRAWO %s ZGADLES SLOWO w %s PROBACH! Twoj wynik to: %.2f pkt. (MAX do zdobycia = 100pkt)" % (userName, stepCounter, score))
+
+	modul.writeScoreToRankingFile(userName, score, rankingPath)
+
+	print ("Wpisz:\n" + start + "	p" + end + " -- aby powrocic do glownego menu\n" + start + "	k" + end + " -- aby zakonczyc\n")
+	winnerUserChoice=raw_input()
+	if winnerUserChoice == "p" or winnerUserChoice == "P" or winnerUserChoice == "powrot":
+		continue
+	elif winnerUserChoice == "k" or winnerUserChoice == "K" or winnerUserChoice == "koniec":
+		print start + "Zamykam." + end 
+		sys.exit()
+	else:
+		print start + "Blad! Podano nieznana wartosc! Zamykam." + end 
+		sys.exit()
+
+
